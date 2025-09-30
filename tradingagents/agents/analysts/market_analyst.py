@@ -1,6 +1,8 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 import time
 import json
+import logging
+from tradingagents.agents.utils.retry import Retry
 
 
 def create_market_analyst(llm, toolkit):
@@ -74,7 +76,9 @@ Volume-Based Indicators:
 
         chain = prompt | llm.bind_tools(tools)
 
-        result = chain.invoke(state["messages"])
+        logger = logging.getLogger(__name__)
+        retry = Retry(max_attempts=None, initial_backoff_seconds=5, backoff_multiplier=1, logger=logger)
+        result = retry.run(chain.invoke, state["messages"]) 
 
         report = ""
 
